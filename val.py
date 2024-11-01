@@ -1,6 +1,11 @@
-from ultralytics import YOLO
+from ultralytics import CYM
+import argparse
 
 if __name__ == '__main__':
-    model = YOLO('runs/train/yolo11l-seg-bcc2/weights/best.pt')
 
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--weight', type=str, default='ultralytics/weights/yolo11m-seg.pt', help='model.pt path')
+    opt = parser.parse_args()
+
+    model = CYM(opt.weight)
     model.val()

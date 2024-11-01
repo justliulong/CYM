@@ -86,6 +86,8 @@ from .transformer import (
     TransformerLayer,
 )
 
+from .improve import TFE
+
 from .Mamba.custom import (VSSM)
 
 __all__ = (
@@ -159,4 +161,5 @@ __all__ = (
     "Attention",
     "PSA",
     "VSSM",
+    "TFE",
 )
