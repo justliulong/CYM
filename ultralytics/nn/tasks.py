@@ -1013,6 +1013,8 @@ def parse_model(d, ch, verbose=True):  # model_dict, input_channels(3)
             # c2 = ch[f]
         elif m is TFE:
             c2 = sum(ch[x] for x in f)
+        elif m is CPAM:
+            c2 = args[0]
         else:
             c2 = ch[f]
 
