@@ -74,6 +74,7 @@ class BaseModel(nn.Module):
         Returns:
             (torch.Tensor): The last output of the model.
         """
+
         if augment:
             return self._predict_augment(x)
         return self._predict_once(x, profile, visualize, embed)
@@ -97,7 +98,16 @@ class BaseModel(nn.Module):
                 x = y[m.f] if isinstance(m.f, int) else [x if j == -1 else y[j] for j in m.f]  # from earlier layers
             if profile:
                 self._profile_one_layer(m, x, dt)
-            x = m(x)  # run
+
+            if m.__class__.__name__ == 'H_SS2D':
+                device = "cuda" if x.is_cuda else "cpu"
+                x = x.to('cuda')
+                m = m.to('cuda')
+                x = m(x)  # run
+                x = x.to(device)
+                m = m.to(device)
+            else:
+                x = m(x)  # run
             y.append(x if m.i in self.save else None)  # save output
             if visualize:
                 feature_visualization(x, m.type, m.i, save_dir=visualize)
@@ -272,13 +282,23 @@ class DetectionModel(BaseModel):
             s = 256  # 2x min stride
             m.inplace = self.inplace
 
-            def _forward(x):
-                """Performs a forward pass through the model, handling different Detect subclass types accordingly."""
-                if self.end2end:
-                    return self.forward(x)["one2many"]
-                return self.forward(x)[0] if isinstance(m, (Segment, Pose, OBB)) else self.forward(x)
+            forward = lambda x: self.forward(x)[0] if isinstance(m, (Segment, Pose, OBB)) else self.forward(x)
 
-            m.stride = torch.tensor([s / x.shape[-2] for x in _forward(torch.zeros(1, ch, s, s))])  # forward
+            try:
+                m.stride = torch.tensor([s / x.shape[-2] for x in forward(torch.zeros(1, ch, s, s))])  # forward
+            except Exception as e:
+                if 'Not implemented on the CPU' in str(
+                        e) or 'Input type (torch.FloatTensor) and weight type (torch.cuda.FloatTensor)' in str(
+                            e) or 'CUDA tensor' in str(e) or 'is_cuda()' in str(
+                                e) or "Cannot find backend for cpu" in str(e):
+                    self.model.to(torch.device('cuda'))
+                    m.stride = torch.tensor([
+                        s / x.shape[-2] for x in forward(torch.zeros(2, ch, s, s).to(torch.device('cuda')))
+                    ])  # forward
+                else:
+                    raise e
+            # if self.model.is_cuda:
+            #     self.model.to(torch.device('cpu'))
             self.stride = m.stride
             m.bias_init()  # only run once
         else:
@@ -1003,14 +1023,9 @@ def parse_model(d, ch, verbose=True):  # model_dict, input_channels(3)
             args = [c1, c2, *args[1:]]
         elif m is CBFuse:
             c2 = ch[f[-1]]
-        elif m is VSSM:
-            # c1 is the channel of input == the channel of the output of the last layer
-            # c2 is the channel of output == the channel of the input of the next layer
-            # ch is the channel of the output of the last layer[f]
-            # the args is the param for model to init,therefore, the args's len must equal to the len of model init function params
-            # the c2 must equal to the args[1] ?
+        elif m is H_SS2D:
             c1 = ch[f]
-            # c2 = ch[f]
+            c2 = args[0]
         elif m is TFE:
             c2 = sum(ch[x] for x in f)
         elif m is CPAM:

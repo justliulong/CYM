@@ -12,6 +12,7 @@ import torch.nn.functional as F
 
 from ultralytics.utils import LOGGER
 from ultralytics.utils.metrics import batch_probiou
+from .metrics import box_iou, soft_nms
 
 
 class Profile(contextlib.ContextDecorator):
@@ -289,7 +290,8 @@ def non_max_suppression(
             i = nms_rotated(boxes, scores, iou_thres)
         else:
             boxes = x[:, :4] + c  # boxes (offset by class)
-            i = torchvision.ops.nms(boxes, scores, iou_thres)  # NMS
+            # i = torchvision.ops.nms(boxes, scores, iou_thres)  # NMS
+            i = soft_nms(boxes, scores, iou_thres) # soft NMS
         i = i[:max_det]  # limit detections
 
         # # Experimental

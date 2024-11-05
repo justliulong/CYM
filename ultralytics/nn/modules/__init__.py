@@ -88,7 +88,7 @@ from .transformer import (
 
 from .improve import *
 
-from .Mamba.custom import (VSSM)
+from .Mamba.custom import *
 
 __all__ = (
     "Conv",
@@ -160,7 +160,7 @@ __all__ = (
     "C2fCIB",
     "Attention",
     "PSA",
-    "VSSM",
+    "H_SS2D",
     "TFE",
     "CPAM",
 )
