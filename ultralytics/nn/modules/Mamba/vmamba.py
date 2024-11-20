@@ -443,6 +443,9 @@ class SS2D(nn.Module):
 
     # an alternative to forward_corev1
     def forward_corev1(self, x: torch.Tensor):
+        '''
+        这是 forward_corev0 的替代版本，当mamba未能成功编译成功时，可以尝试使用这个版本（这个会使得训练更加慢）
+        '''
         self.selective_scan = selective_scan_fn_v1
 
         B, C, H, W = x.shape

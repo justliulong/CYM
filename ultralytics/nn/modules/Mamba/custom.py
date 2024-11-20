@@ -75,8 +75,8 @@ class LayerNorm(nn.Module):
 
     def __init__(self, normalized_shape, eps=1e-6, data_format="channels_last"):
         super().__init__()
-        self.weight = nn.Parameter(torch.ones(normalized_shape)).to('cuda')
-        self.bias = nn.Parameter(torch.zeros(normalized_shape)).to('cuda')
+        self.weight = nn.Parameter(torch.ones(normalized_shape))
+        self.bias = nn.Parameter(torch.zeros(normalized_shape))
         self.eps = eps
         self.data_format = data_format
         if self.data_format not in ["channels_last", "channels_first"]:
@@ -84,7 +84,6 @@ class LayerNorm(nn.Module):
         self.normalized_shape = (normalized_shape, )
 
     def forward(self, x):
-        x.to('cuda')
         if self.data_format == "channels_last":
             return F.layer_norm(x, self.normalized_shape, self.weight, self.bias, self.eps)
         elif self.data_format == "channels_first":
@@ -99,16 +98,15 @@ class Local_SS2D(nn.Module):
 
     def __init__(self, dim):
         super().__init__()
-        self.dw = nn.Conv2d(dim // 2, dim // 2, kernel_size=3, padding=1, bias=False, groups=dim // 2).to('cuda')
+        self.dw = nn.Conv2d(dim // 2, dim // 2, kernel_size=3, padding=1, bias=False, groups=dim // 2)
         # self.complex_weight = nn.Parameter(torch.randn(dim // 2, h, w, 2, dtype=torch.float32) * 0.02)
         # trunc_normal_(self.complex_weight, std=.02)
-        self.pre_norm = LayerNorm(dim, eps=1e-6, data_format='channels_first').to('cuda')
-        self.post_norm = LayerNorm(dim, eps=1e-6, data_format='channels_first').to('cuda')
+        self.pre_norm = LayerNorm(dim, eps=1e-6, data_format='channels_first')
+        self.post_norm = LayerNorm(dim, eps=1e-6, data_format='channels_first')
 
-        self.SS2D = SS2D(d_model=dim // 2, dropout=0, d_state=16).to('cuda')
+        self.SS2D = SS2D(d_model=dim // 2, dropout=0, d_state=16)
 
     def forward(self, x):
-        x.to('cuda')
         x = self.pre_norm(x)
         x1, x2 = torch.chunk(x, 2, dim=1)
         x1 = self.dw(x1)
@@ -140,8 +138,8 @@ class H_SS2D(nn.Module):
         if gflayer is None:
             self.dwconv = get_dwconv(sum(self.dims), 7, True)
         else:
-            gflayer = eval(gflayer)
-            self.dwconv = gflayer(sum(self.dims)).to('cuda')
+            # gflayer = eval(gflayer)
+            self.dwconv = Local_SS2D(sum(self.dims)).to('cuda')
 
         self.proj_out = nn.Conv2d(dim, dim, 1).to('cuda')
 
@@ -149,10 +147,10 @@ class H_SS2D(nn.Module):
 
         num = len(self.dims)
         if num == 2:
-            self.ss2d_1 = SS2D(d_model=self.dims[1], dropout=0, d_state=16)
+            self.ss2d_1 = SS2D(d_model=self.dims[1], dropout=0, d_state=16).to('cuda')
         elif num == 3:
-            self.ss2d_1 = SS2D(d_model=self.dims[1], dropout=0, d_state=16)
-            self.ss2d_2 = SS2D(d_model=self.dims[2], dropout=0, d_state=16)
+            self.ss2d_1 = SS2D(d_model=self.dims[1], dropout=0, d_state=16).to('cuda')
+            self.ss2d_2 = SS2D(d_model=self.dims[2], dropout=0, d_state=16).to('cuda')
         elif num == 4:
             self.ss2d_1 = SS2D(d_model=self.dims[1], dropout=0, d_state=16).to('cuda')
             self.ss2d_2 = SS2D(d_model=self.dims[2], dropout=0, d_state=16).to('cuda')

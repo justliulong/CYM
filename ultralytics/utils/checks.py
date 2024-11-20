@@ -144,13 +144,17 @@ def check_imgsz(imgsz, stride=32, min_dim=1, max_dim=2, floor=0):
     elif isinstance(imgsz, str):  # i.e. '640' or '[640,640]'
         imgsz = [int(imgsz)] if imgsz.isnumeric() else eval(imgsz)
     else:
-        raise TypeError(f"'imgsz={imgsz}' is of invalid type {type(imgsz).__name__}. "
-                        f"Valid imgsz types are int i.e. 'imgsz=640' or list i.e. 'imgsz=[640,640]'")
+        raise TypeError(
+            f"'imgsz={imgsz}' is of invalid type {type(imgsz).__name__}. "
+            f"Valid imgsz types are int i.e. 'imgsz=640' or list i.e. 'imgsz=[640,640]'"
+        )
 
     # Apply max_dim
     if len(imgsz) > max_dim:
-        msg = ("'train' and 'val' imgsz must be an integer, while 'predict' and 'export' imgsz may be a [h, w] list "
-               "or an integer, i.e. 'yolo export imgsz=640,480' or 'yolo export imgsz=640'")
+        msg = (
+            "'train' and 'val' imgsz must be an integer, while 'predict' and 'export' imgsz may be a [h, w] list "
+            "or an integer, i.e. 'yolo export imgsz=640,480' or 'yolo export imgsz=640'"
+        )
         if max_dim != 1:
             raise ValueError(f"imgsz={imgsz} is not a valid image size. {msg}")
         LOGGER.warning(f"WARNING ⚠️ updating to 'imgsz={max(imgsz)}'. {msg}")
@@ -222,8 +226,10 @@ def check_version(
         return True
 
     if "sys_platform" in required and (  # i.e. required='<2.4.0,>=1.8.0; sys_platform == "win32"'
-        (WINDOWS and "win32" not in required) or (LINUX and "linux" not in required) or
-        (MACOS and "macos" not in required and "darwin" not in required)):
+        (WINDOWS and "win32" not in required)
+        or (LINUX and "linux" not in required)
+        or (MACOS and "macos" not in required and "darwin" not in required)
+    ):
         return True
 
     op = ""
@@ -288,8 +294,10 @@ def check_pip_update_available():
 
             latest = check_latest_pypi_version()
             if check_version(__version__, f"<{latest}"):  # check if current version is < latest version
-                LOGGER.info(f"New https://pypi.org/project/ultralytics/{latest} available 😃 "
-                            f"Update with 'pip install -U ultralytics'")
+                LOGGER.info(
+                    f"New https://pypi.org/project/ultralytics/{latest} available 😃 "
+                    f"Update with 'pip install -U ultralytics'"
+                )
                 return True
         except Exception:
             pass
@@ -403,7 +411,8 @@ def check_requirements(requirements=ROOT.parent / "requirements.txt", exclude=()
                 dt = time.time() - t
                 LOGGER.info(
                     f"{prefix} AutoUpdate success ✅ {dt:.1f}s, installed {n} package{'s' * (n > 1)}: {pkgs}\n"
-                    f"{prefix} ⚠️ {colorstr('bold', 'Restart runtime or rerun command for updates to take effect')}\n")
+                    f"{prefix} ⚠️ {colorstr('bold', 'Restart runtime or rerun command for updates to take effect')}\n"
+                )
             except Exception as e:
                 LOGGER.warning(f"{prefix} ❌ {e}")
                 return False
@@ -441,17 +450,19 @@ def check_torchvision():
         compatible_versions = compatibility_table[v_torch]
         v_torchvision = ".".join(TORCHVISION_VERSION.split("+")[0].split(".")[:2])
         if all(v_torchvision != v for v in compatible_versions):
-            print(f"WARNING ⚠️ torchvision=={v_torchvision} is incompatible with torch=={v_torch}.\n"
-                  f"Run 'pip install torchvision=={compatible_versions[0]}' to fix torchvision or "
-                  "'pip install -U torch torchvision' to update both.\n"
-                  "For a full compatibility table see https://github.com/pytorch/vision#installation")
+            print(
+                f"WARNING ⚠️ torchvision=={v_torchvision} is incompatible with torch=={v_torch}.\n"
+                f"Run 'pip install torchvision=={compatible_versions[0]}' to fix torchvision or "
+                "'pip install -U torch torchvision' to update both.\n"
+                "For a full compatibility table see https://github.com/pytorch/vision#installation"
+            )
 
 
 def check_suffix(file="yolo11n.pt", suffix=".pt", msg=""):
     """Check file(s) for acceptable suffix."""
     if file and suffix:
         if isinstance(suffix, str):
-            suffix = (suffix, )
+            suffix = (suffix,)
         for f in file if isinstance(file, (list, tuple)) else [file]:
             s = Path(f).suffix.lower().strip()  # file suffix
             if len(s):
@@ -472,7 +483,8 @@ def check_yolov5u_filename(file: str, verbose: bool = True):
                 LOGGER.info(
                     f"PRO TIP 💡 Replace 'model={original_file}' with new 'model={file}'.\nYOLOv5 'u' models are "
                     f"trained with https://github.com/ultralytics/ultralytics and feature improved performance vs "
-                    f"standard YOLOv5 models trained with https://github.com/ultralytics/yolov5.\n")
+                    f"standard YOLOv5 models trained with https://github.com/ultralytics/yolov5.\n"
+                )
     return file
 
 
@@ -489,8 +501,11 @@ def check_file(file, suffix="", download=True, download_dir=".", hard=True):
     check_suffix(file, suffix)  # optional
     file = str(file).strip()  # convert to string and strip spaces
     file = check_yolov5u_filename(file)  # yolov5n -> yolov5nu
-    if (not file or ("://" not in file and Path(file).exists())  # '://' check required in Windows Python<3.10
-            or file.lower().startswith("grpc://")):  # file exists or gRPC Triton images
+    if (
+        not file
+        or ("://" not in file and Path(file).exists())  # '://' check required in Windows Python<3.10
+        or file.lower().startswith("grpc://")
+    ):  # file exists or gRPC Triton images
         return file
     elif download and file.lower().startswith(("https://", "http://", "rtsp://", "rtmp://", "tcp://")):  # download
         url = file  # warning: Pathlib turns :// -> :/
@@ -528,7 +543,7 @@ def check_is_path_safe(basedir, path):
     base_dir_resolved = Path(basedir).resolve()
     path_resolved = Path(path).resolve()
 
-    return path_resolved.exists() and path_resolved.parts[:len(base_dir_resolved.parts)] == base_dir_resolved.parts
+    return path_resolved.exists() and path_resolved.parts[: len(base_dir_resolved.parts)] == base_dir_resolved.parts
 
 
 def check_imshow(warn=False):
@@ -681,15 +696,19 @@ def check_amp(model):
         assert amp_allclose(YOLO("ultralytics/weights/yolo11n.pt"), im)
         LOGGER.info(f"{prefix}checks passed ✅")
     except ConnectionError:
-        LOGGER.warning(f"{prefix}checks skipped ⚠️. "
-                       f"Offline and unable to download YOLO11n for AMP checks. {warning_msg}")
+        LOGGER.warning(
+            f"{prefix}checks skipped ⚠️. " f"Offline and unable to download YOLO11n for AMP checks. {warning_msg}"
+        )
     except (AttributeError, ModuleNotFoundError):
         LOGGER.warning(
             f"{prefix}checks skipped ⚠️. "
-            f"Unable to load YOLO11n for AMP checks due to possible Ultralytics package modifications. {warning_msg}")
+            f"Unable to load YOLO11n for AMP checks due to possible Ultralytics package modifications. {warning_msg}"
+        )
     except AssertionError:
-        LOGGER.warning(f"{prefix}checks failed ❌. Anomalies were detected with AMP on your system that may lead to "
-                       f"NaN losses or zero-mAP results, so AMP will be disabled during training.")
+        LOGGER.warning(
+            f"{prefix}checks failed ❌. Anomalies were detected with AMP on your system that may lead to "
+            f"NaN losses or zero-mAP results, so AMP will be disabled during training."
+        )
         return False
     return True
 
@@ -731,8 +750,9 @@ def cuda_device_count() -> int:
     """
     try:
         # Run the nvidia-smi command and capture its output
-        output = subprocess.check_output(["nvidia-smi", "--query-gpu=count", "--format=csv,noheader,nounits"],
-                                         encoding="utf-8")
+        output = subprocess.check_output(
+            ["nvidia-smi", "--query-gpu=count", "--format=csv,noheader,nounits"], encoding="utf-8"
+        )
 
         # Take the first line and strip any leading/trailing white space
         first_line = output.strip().split("\n")[0]

@@ -33,6 +33,8 @@ from ultralytics.utils.torch_utils import (
     time_sync,
 )
 
+import inspect
+
 try:
     import thop
 except ImportError:
@@ -1030,6 +1032,12 @@ def parse_model(d, ch, verbose=True):  # model_dict, input_channels(3)
             c2 = sum(ch[x] for x in f)
         elif m is CPAM:
             c2 = args[0]
+        elif m is ScalSeq:
+            c2 = args[0]
+        elif m is LDConv:
+            c2 = args[0]
+            c1 = ch[f]
+            args = [c1, c2, *args[1:]]
         else:
             c2 = ch[f]
 

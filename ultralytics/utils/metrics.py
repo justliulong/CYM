@@ -303,8 +303,9 @@ def bbox_iou_for_nms(box1,
                 with torch.no_grad():
                     alpha_ciou = v / (v - iou + (1 + eps))
                 if Focal:
-                    return iou - (rho2 / c2 + torch.pow(v * alpha_ciou + eps, alpha)), torch.pow(
-                        inter / (union + eps), gamma)  # Focal_CIoU
+                    focal_loss = (1 - iou).pow(gamma)
+                    ciou_loss = iou - (rho2 / c2 + torch.pow(v * alpha_ciou + eps, alpha))
+                    return focal_loss * ciou_loss  # Focal_CIoU
                 else:
                     return iou - (rho2 / c2 + torch.pow(v * alpha_ciou + eps, alpha))  # CIoU
             elif EIoU:
