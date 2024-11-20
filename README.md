@@ -21,4 +21,8 @@ pip install scikit-learn matplotlib thop h5py SimpleITK scikit-image medpy yacs
 
 ## add the mamba's ss2d module, and fusion the H-ss2d module!(Although the memory usage has increased and the batch-size has reduce to 2, the model is still able to perform comparable to no pretrian yolov11-l and batch-size with 8)
 
+# 2024.11.20
+
+## add the LDConv module, modified the backbone, the LDConv (linear Deformable Convolution) can improve the performance of the model, batch-size with 2 and ephoch with 300,the Recall can from 0.86~0.87 reach to 0.9+(comparable with the cym with ss2d and cpam)
+
 # Updating ...
